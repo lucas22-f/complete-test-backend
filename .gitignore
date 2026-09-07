@@ -4,3 +4,4 @@ __pycache__/
 .env
 ai_support.db
 .pytest_cache/
+.atl

@@ -1,32 +1,33 @@
-# app/api/chat.py
-
-# APIRouter nos permite agrupar endpoints relacionados.
-# En este archivo vamos a colocar únicamente endpoints de chat.
-from fastapi import APIRouter
-
-
-# Importamos los contratos de entrada y salida
-# desde la capa de schemas.
-from app.schemas.chat import ChatRequest,ChatResponse
+"""HTTP framing only; authentication runs before the paid stream starts."""
+import json
+from contextlib import aclosing
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+from app.api.dependencies import get_current_user
+from app.schemas.chat import ChatRequest
 from app.services.chat import ChatService
 
-
-# Creamos un router independiente.
 router = APIRouter()
-chat_service = ChatService()
 
 
+def get_chat_service() -> ChatService:
+    return ChatService()
 
 
 @router.post(
     "/chat",
-    response_model=ChatResponse,
-    status_code=200,
+    response_class=StreamingResponse,
+    dependencies=[Depends(get_current_user, scope="function")],
+    responses={200: {"content": {"text/event-stream": {}}}},
 )
-def chat(request: ChatRequest):
-    """
-    El router se ocupa de HTTP.
+async def chat(request: ChatRequest, service: ChatService = Depends(get_chat_service)):
+    async def events():
+        async with aclosing(service.stream(request)) as stream:
+            async for event in stream:
+                data = json.dumps(event.data, ensure_ascii=False)
+                yield f"event: {event.event}\ndata: {data}\n\n"
 
-    La lógica de procesar el mensaje se delega al service.
-    """
-    return chat_service.procesar_mensaje(request)
+    return StreamingResponse(
+        events(), media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )

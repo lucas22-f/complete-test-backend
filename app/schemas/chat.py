@@ -1,15 +1,22 @@
-from pydantic import BaseModel, Field
+"""Public chat contracts; SSE data is serialized as JSON."""
+from typing import Literal
+from pydantic import BaseModel, ConfigDict, Field
 
 
-# Modelo de entrada del endpoint de chat.
-# Representa los datos que esperamos recibir del cliente.
 class ChatRequest(BaseModel):
-    thread_id: str = Field(min_length=1)
-    message: str = Field(min_length=1)
+    model_config = ConfigDict(str_strip_whitespace=True)
+    thread_id: str = Field(min_length=1, max_length=128)
+    message: str = Field(min_length=1, max_length=8000)
 
 
-# Modelo de salida del endpoint de chat.
-# Representa exactamente la estructura que queremos exponer al cliente.
 class ChatResponse(BaseModel):
     thread_id: str
-    answer: str
+    response: str
+    # Remain empty until real tools and retrieval are introduced.
+    actions: list[dict] = Field(default_factory=list)
+    sources: list[dict] = Field(default_factory=list)
+
+
+class ChatEvent(BaseModel):
+    event: Literal["message_delta", "completed", "error"]
+    data: dict
