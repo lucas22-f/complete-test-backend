@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Support · Streaming client</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+  <!-- Small standalone client for exercising the FastAPI SSE endpoint. -->
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">AI SUPPORT / PLAYGROUND</p>
+        <h1>Streaming chat</h1>
+      </div>
+      <span id="connection-status" class="status-pill">Ready</span>
+    </header>
+
+    <section class="config-panel" aria-label="Connection settings">
+      <label>
+        API URL
+        <input id="api-url" value="http://localhost:8000/api/v1/chat" />
+      </label>
+      <label>
+        Bearer token
+        <input id="token" type="password" placeholder="Paste your JWT" autocomplete="off" />
+      </label>
+      <label>
+        Thread ID
+        <input id="thread-id" value="browser-test" />
+      </label>
+    </section>
+
+    <section id="messages" class="messages" aria-live="polite" aria-label="Conversation">
+      <div class="empty-state">Send a message to see the agent stream tokens in real time.</div>
+    </section>
+
+    <form id="chat-form" class="composer">
+      <label class="sr-only" for="message">Message</label>
+      <textarea id="message" rows="2" placeholder="Ask the agent something…" required></textarea>
+      <button id="send-button" type="submit">Send <span aria-hidden="true">↗</span></button>
+    </form>
+    <p class="hint">The final <code>completed</code> event includes actions and sources.</p>
+  </main>
+  <script src="./app.js" type="module"></script>
+</body>
+
+</html>
