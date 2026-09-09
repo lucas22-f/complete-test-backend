@@ -66,7 +66,7 @@ def build_graph(
     afuera para mantener este módulo independiente de configuración y de HTTP.
     """
 
-    async def classify(state: ChatState, _: RunnableConfig):
+    async def classify(state: ChatState, config: RunnableConfig):
         """Clasifica la consulta y guarda la ruta que decidirá el siguiente nodo."""
         decision = await route_decider(_latest_user_message(state["messages"]))
         # MCP permanece en el contrato tipado para la siguiente etapa, pero no se
@@ -78,7 +78,7 @@ def build_graph(
         """Devuelve la etiqueta que LangGraph usa para seguir una arista condicional."""
         return "rag" if state["route"] == "rag" else "direct"
 
-    async def retrieve_rag(state: ChatState, _: RunnableConfig):
+    async def retrieve_rag(state: ChatState, config: RunnableConfig):
         """Busca contexto semántico y lo incorpora como instrucción para la respuesta."""
         context, sources = await retrieve_context(_latest_user_message(state["messages"]))
         return {
@@ -122,7 +122,7 @@ def build_openai_route_decider(model: BaseChatModel) -> RouteDecider:
     ``with_structured_output`` solicita una salida compatible con Pydantic, de
     modo que la decisión llega como ``RouteDecision`` y no como texto a parsear.
     """
-    structured_model = model.with_structured_output(RouteDecision)
+    structured_model = model.with_structured_output(RouteDecision, method="function_calling")
 
     async def decide(question: str) -> RouteDecision:
         """Envía sólo la última pregunta al clasificador para evitar rutas ambiguas."""
