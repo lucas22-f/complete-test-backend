@@ -32,6 +32,7 @@ async function consumeSse(response, agentMessage) {
   const decoder = new TextDecoder();
   let buffer = "";
   let finalPayload;
+  let route;
 
   const processFrame = (frame) => {
     const eventName = frame.match(/^event: (.+)$/m)?.[1];
@@ -41,6 +42,11 @@ async function consumeSse(response, agentMessage) {
     if (eventName === "message_delta") {
       agentMessage.textContent += data.delta;
       messages.scrollTop = messages.scrollHeight;
+    } else if (eventName === "route_selected") {
+      route = data.route;
+      setStatus(`Using ${route} route…`, "busy");
+    } else if (eventName === "context_retrieved") {
+      setStatus("FAQ context retrieved…", "busy");
     } else if (eventName === "completed") {
       finalPayload = data;
     } else if (eventName === "error") {
@@ -58,7 +64,7 @@ async function consumeSse(response, agentMessage) {
   }
   if (buffer.trim()) processFrame(buffer);
   if (!finalPayload) throw new Error("The stream ended without a completed event.");
-  return finalPayload;
+  return { ...finalPayload, route };
 }
 
 form.addEventListener("submit", async (event) => {
@@ -84,7 +90,10 @@ form.addEventListener("submit", async (event) => {
     const completed = await consumeSse(response, agentMessage);
     const actionCount = completed.actions?.length || 0;
     const sourceCount = completed.sources?.length || 0;
-    agentMessage.insertAdjacentHTML("beforeend", `<small class="meta">${actionCount} action(s) · ${sourceCount} source(s)</small>`);
+    const metadata = document.createElement("small");
+    metadata.className = "meta";
+    metadata.textContent = `${completed.route || "direct"} route · ${actionCount} action(s) · ${sourceCount} source(s)`;
+    agentMessage.append(metadata);
     setStatus("Connected", "");
   } catch (error) {
     agentMessage.remove();

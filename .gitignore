@@ -5,3 +5,4 @@ __pycache__/
 ai_support.db
 .pytest_cache/
 .atl
+app/rag/vector_store/

@@ -34,5 +34,10 @@ services:
     ports:
       - "8000:8000"
 
+    volumes:
+      # Persist the local Chroma index between container recreations.
+      - rag_vector_store:/app/app/rag/vector_store
+
 volumes:
   postgres_data:
+  rag_vector_store:

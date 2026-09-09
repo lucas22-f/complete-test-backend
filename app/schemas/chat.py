@@ -1,5 +1,7 @@
 """Public chat contracts; SSE data is serialized as JSON."""
+
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -12,11 +14,17 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     thread_id: str
     response: str
-    # Remain empty until real tools and retrieval are introduced.
     actions: list[dict] = Field(default_factory=list)
     sources: list[dict] = Field(default_factory=list)
 
 
 class ChatEvent(BaseModel):
-    event: Literal["message_delta", "completed", "error"]
+    # Metadata events let a streaming client expose agent progress without parsing text.
+    event: Literal[
+        "message_delta",
+        "route_selected",
+        "context_retrieved",
+        "completed",
+        "error",
+    ]
     data: dict
